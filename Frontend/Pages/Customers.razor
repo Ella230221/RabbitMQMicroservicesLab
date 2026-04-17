@@ -1,0 +1,85 @@
+@page "/customers"
+@using Frontend.Models
+@using Frontend.Services
+@inject ApiService Api
+
+<PageTitle>Customers</PageTitle>
+
+<h3 class="mb-4">Customers</h3>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <CustomerForm Model="newCustomer" OnSubmit="CreateCustomerAsync" IsSubmitting="isSubmitting" />
+    </div>
+    <div class="col-lg-8">
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="alert alert-info">@statusMessage</div>
+        }
+
+        @if (customers == null)
+        {
+            <p>Loading customers...</p>
+        }
+        else if (!customers.Any())
+        {
+            <p>No customers found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var customer in customers)
+                        {
+                            <tr>
+                                <td>@customer.Id</td>
+                                <td>@customer.Name</td>
+                                <td>@customer.Email</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<CustomerDto>? customers;
+    private CustomerDto newCustomer = new();
+    private bool isSubmitting;
+    private string? statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await Api.GetCustomersAsync();
+    }
+
+    private async Task CreateCustomerAsync()
+    {
+        isSubmitting = true;
+        statusMessage = null;
+
+        var success = await Api.CreateCustomerAsync(newCustomer);
+        if (success)
+        {
+            statusMessage = "Customer created successfully.";
+            newCustomer = new CustomerDto();
+            customers = await Api.GetCustomersAsync();
+        }
+        else
+        {
+            statusMessage = "Customer creation failed.";
+        }
+
+        isSubmitting = false;
+    }
+}

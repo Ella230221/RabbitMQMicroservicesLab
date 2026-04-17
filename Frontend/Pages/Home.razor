@@ -1,0 +1,156 @@
+﻿@page "/"
+@using Frontend.Models
+@using Frontend.Services
+@inject ApiService Api
+
+<PageTitle>Home</PageTitle>
+
+<h1 class="mb-4">Microservices Dashboard</h1>
+
+@if (loading)
+{
+    <p>Loading dashboard...</p>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card text-bg-primary border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Products</h5>
+                    <p class="display-6 mb-0">@summary.ProductCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-success border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Customers</h5>
+                    <p class="display-6 mb-0">@summary.CustomerCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-dark border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Orders</h5>
+                    <p class="display-6 mb-0">@summary.OrderCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-warning border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Payments</h5>
+                    <p class="display-6 mb-0">@summary.PaymentCount</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Revenue</h5>
+                    <p class="display-6 mb-0">@summary.TotalRevenue.ToString("C")</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Processed Payments</h5>
+                    <p class="display-6 mb-0">@summary.TotalProcessedPayments.ToString("C")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h4>Latest Orders</h4>
+        @if (!summary.LatestOrders.Any())
+        {
+            <p class="text-secondary">No orders yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in summary.LatestOrders)
+                        {
+                            <tr>
+                                <td>@order.Id</td>
+                                <td>@order.CustomerName</td>
+                                <td>@order.ProductName</td>
+                                <td>@order.Quantity</td>
+                                <td>@order.TotalPrice.ToString("C")</td>
+                                <td>@order.Status</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="mt-4">
+        <h4>Latest Payments</h4>
+        @if (!summary.LatestPayments.Any())
+        {
+            <p class="text-secondary">No payments processed yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Processed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var payment in summary.LatestPayments)
+                        {
+                            <tr>
+                                <td>@payment.Id</td>
+                                <td>@payment.OrderId</td>
+                                <td>@payment.CustomerId</td>
+                                <td>@payment.Amount.ToString("C")</td>
+                                <td>@payment.Status</td>
+                                <td>@payment.ProcessedAtUtc.ToLocalTime().ToString("g")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool loading = true;
+    private DashboardSummaryDto summary = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        summary = await Api.GetDashboardSummaryAsync();
+        loading = false;
+    }
+}

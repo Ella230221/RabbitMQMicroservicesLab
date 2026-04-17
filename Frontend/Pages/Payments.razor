@@ -1,0 +1,56 @@
+@page "/payments"
+@using Frontend.Models
+@using Frontend.Services
+@inject ApiService Api
+
+<PageTitle>Payments</PageTitle>
+
+<h3 class="mb-4">Payments</h3>
+
+@if (payments == null)
+{
+    <p>Loading payments...</p>
+}
+else if (!payments.Any())
+{
+    <div class="alert alert-info">No payments have been processed yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Order Id</th>
+                    <th>Customer Id</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Processed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var payment in payments)
+                {
+                    <tr>
+                        <td>@payment.Id</td>
+                        <td>@payment.OrderId</td>
+                        <td>@payment.CustomerId</td>
+                        <td>@payment.Amount.ToString("C")</td>
+                        <td>@payment.Status</td>
+                        <td>@payment.ProcessedAtUtc.ToLocalTime().ToString("g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<PaymentDto>? payments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        payments = await Api.GetPaymentsAsync();
+    }
+}

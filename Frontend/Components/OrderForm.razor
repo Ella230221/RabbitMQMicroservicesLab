@@ -1,0 +1,54 @@
+@using Frontend.Models
+
+<EditForm Model="@Model" OnValidSubmit="@HandleSubmit" class="card shadow-sm border-0">
+    <DataAnnotationsValidator />
+    <div class="card-body">
+        <h5 class="card-title">Create Order</h5>
+        <div class="mb-3">
+            <label class="form-label">Customer</label>
+            <InputSelect class="form-select" @bind-Value="Model.CustomerId">
+                <option value="0">Select a customer</option>
+                @foreach (var customer in Customers)
+                {
+                    <option value="@customer.Id">@customer.Name (@customer.Email)</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Product</label>
+            <InputSelect class="form-select" @bind-Value="Model.ProductId">
+                <option value="0">Select a product</option>
+                @foreach (var product in Products)
+                {
+                    <option value="@product.Id">@product.Name - @product.Price.ToString("C") (Stock: @product.Stock)</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Quantity</label>
+            <InputNumber class="form-control" @bind-Value="Model.Quantity" />
+        </div>
+        <button type="submit" class="btn btn-success" disabled="@IsSubmitting">
+            @(IsSubmitting ? "Submitting..." : "Place Order")
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public CreateOrderRequest Model { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<CustomerDto> Customers { get; set; } = Array.Empty<CustomerDto>();
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ProductDto> Products { get; set; } = Array.Empty<ProductDto>();
+
+    [Parameter, EditorRequired]
+    public EventCallback OnSubmit { get; set; }
+
+    [Parameter]
+    public bool IsSubmitting { get; set; }
+
+    private Task HandleSubmit() => OnSubmit.InvokeAsync();
+}

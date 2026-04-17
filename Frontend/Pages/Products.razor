@@ -1,0 +1,70 @@
+@page "/products"
+@using Frontend.Models
+@using Frontend.Services
+@inject ApiService Api
+
+<PageTitle>Products</PageTitle>
+
+<h3 class="mb-4">Products</h3>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <ProductForm Model="newProduct" OnSubmit="CreateProductAsync" IsSubmitting="isSubmitting" />
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="alert mt-3 @(lastCreateSucceeded ? "alert-success" : "alert-danger")">@statusMessage</div>
+        }
+    </div>
+    <div class="col-lg-8">
+        @if (products == null)
+        {
+            <p>Loading...</p>
+        }
+        else if (!products.Any())
+        {
+            <p>No products found.</p>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var product in products)
+                {
+                    <div class="col-md-6 col-xl-4">
+                        <ProductCard Product="product" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<ProductDto>? products;
+    private ProductDto newProduct = new();
+    private bool isSubmitting;
+    private bool lastCreateSucceeded;
+    private string? statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Api.GetProductsAsync();
+    }
+
+    private async Task CreateProductAsync()
+    {
+        isSubmitting = true;
+        statusMessage = null;
+
+        var success = await Api.CreateProductAsync(newProduct);
+        lastCreateSucceeded = success;
+        statusMessage = success ? "Product created successfully." : "Product creation failed.";
+
+        if (success)
+        {
+            newProduct = new ProductDto();
+            products = await Api.GetProductsAsync();
+        }
+
+        isSubmitting = false;
+    }
+}

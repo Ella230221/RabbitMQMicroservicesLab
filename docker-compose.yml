@@ -1,0 +1,89 @@
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  customerservice:
+    container_name: customerservice
+    build:
+      context: ./CustomerService/CustomerService.Api
+    ports:
+      - "5001:8080"
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__CustomerDb: Data Source=customers.db
+
+  productservice:
+    container_name: productservice
+    build:
+      context: ./ProductService/ProductService.Api
+    ports:
+      - "5003:8080"
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__ProductDb: Data Source=products.db
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__ExchangeName: orders-exchange
+      RabbitMQ__QueueName: product-orders-queue
+    depends_on:
+      - rabbitmq
+
+  orderservice:
+    container_name: orderservice
+    build:
+      context: ./OrderService
+    ports:
+      - "5002:8080"
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__OrderDb: Data Source=orders.db
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__ExchangeName: orders-exchange
+      ServiceEndpoints__CustomerService: http://customerservice:8080
+      ServiceEndpoints__ProductService: http://productservice:8080
+    depends_on:
+      - customerservice
+      - productservice
+      - rabbitmq
+
+  paymentservice:
+    container_name: paymentservice
+    build:
+      context: ./PaymentService
+    ports:
+      - "5004:8080"
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__ExchangeName: orders-exchange
+      RabbitMQ__QueueName: payment-orders-queue
+    depends_on:
+      - rabbitmq
+
+  apigateway:
+    container_name: apigateway
+    build:
+      context: ./ApiGateway
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Ocelot__Environment: Docker
+    depends_on:
+      - orderservice
+      - customerservice
+      - productservice
+      - paymentservice
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./Frontend
+    ports:
+      - "5262:80"
+    depends_on:
+      - apigateway

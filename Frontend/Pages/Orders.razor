@@ -1,0 +1,107 @@
+@page "/orders"
+@using Frontend.Models
+@using Frontend.Services
+@inject ApiService Api
+
+<PageTitle>Orders</PageTitle>
+
+<h3 class="mb-4">Orders</h3>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <OrderForm Model="newOrder" Customers="customers" Products="products" OnSubmit="CreateOrderAsync" IsSubmitting="isSubmitting" />
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="alert mt-3 @(lastOrderSucceeded ? "alert-success" : "alert-danger")">@statusMessage</div>
+        }
+    </div>
+    <div class="col-lg-8">
+        @if (orders == null)
+        {
+            <p>Loading orders...</p>
+        }
+        else if (!orders.Any())
+        {
+            <p>No orders found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in orders)
+                        {
+                            <tr>
+                                <td>@order.Id</td>
+                                <td>@order.CustomerName</td>
+                                <td>@order.ProductName</td>
+                                <td>@order.Quantity</td>
+                                <td>@order.UnitPrice.ToString("C")</td>
+                                <td>@order.TotalPrice.ToString("C")</td>
+                                <td>@order.Status</td>
+                                <td>@order.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<ProductDto> products = new();
+    private List<CustomerDto> customers = new();
+    private List<OrderDto>? orders;
+    private CreateOrderRequest newOrder = new();
+    private bool isSubmitting;
+    private bool lastOrderSucceeded;
+    private string? statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task CreateOrderAsync()
+    {
+        if (newOrder.CustomerId <= 0 || newOrder.ProductId <= 0 || newOrder.Quantity <= 0)
+        {
+            statusMessage = "Please choose a customer, a product, and a valid quantity.";
+            lastOrderSucceeded = false;
+            return;
+        }
+
+        isSubmitting = true;
+        var result = await Api.CreateOrderAsync(newOrder);
+        lastOrderSucceeded = result.Success;
+        statusMessage = result.Message;
+
+        if (result.Success)
+        {
+            newOrder = new CreateOrderRequest { Quantity = 1 };
+            await RefreshAsync();
+        }
+
+        isSubmitting = false;
+    }
+
+    private async Task RefreshAsync()
+    {
+        products = await Api.GetProductsAsync();
+        customers = await Api.GetCustomersAsync();
+        orders = await Api.GetOrdersAsync();
+    }
+}

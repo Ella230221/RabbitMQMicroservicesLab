@@ -1,0 +1,17 @@
+@using Frontend.Models
+
+<div class="card h-100 shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title mb-0">@Product.Name</h5>
+            <span class="badge text-bg-primary">#@Product.Id</span>
+        </div>
+        <p class="card-text text-secondary mb-1">Price: @Product.Price.ToString("C")</p>
+        <p class="card-text mb-0">Stock: <strong>@Product.Stock</strong></p>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ProductDto Product { get; set; } = default!;
+}

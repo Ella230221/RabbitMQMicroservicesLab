@@ -1,0 +1,32 @@
+@using Frontend.Models
+
+<EditForm Model="@Model" OnValidSubmit="@HandleSubmit" class="card shadow-sm border-0">
+    <DataAnnotationsValidator />
+    <div class="card-body">
+        <h5 class="card-title">Create Customer</h5>
+        <div class="mb-3">
+            <label class="form-label">Name</label>
+            <InputText class="form-control" @bind-Value="Model.Name" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText class="form-control" @bind-Value="Model.Email" />
+        </div>
+        <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+            @(IsSubmitting ? "Saving..." : "Add Customer")
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public CustomerDto Model { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnSubmit { get; set; }
+
+    [Parameter]
+    public bool IsSubmitting { get; set; }
+
+    private Task HandleSubmit() => OnSubmit.InvokeAsync();
+}
